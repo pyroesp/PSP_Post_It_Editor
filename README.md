@@ -13,3 +13,11 @@ Select an option with X.
 ## Legacy
 Legacy code from the original homebrew.  
 Small changes so it compiles today.  
+
+## Credits
+kevinr for the graphics library.  
+raytwo for all the images.  
+Benhur for intraFont
+
+## License
+Creative Commons [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)  
