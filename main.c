@@ -20,6 +20,7 @@
 
 
 #include "graphics.h"
+#include "resource.h"
 
 
 PSP_MODULE_INFO("PSP Post It - Editor", 0, 1, 1);
@@ -45,35 +46,22 @@ int SetupCallbacks(void) {
 	return thid;
 }
 
-// use enum for quick constants
-enum Menu{
-	VIEW,
-	EDIT,
-	ADD,
-	REMOVE,
-	SAVE,
-	EXIT,
-	CREDITS	
-};
-
 
 int main (int argc, char *argv[]){
 	// make default image
 	Image *def = NULL;
 	def = gfx_createDefaultImage();
+	// load main
+	Image *main = NULL;
+	main = gfx_loadImage(RES_IMAGE_PATH RES_MAIN);
+	
+	if(!main)
+		main = def;
 	
 	int x = 0;
 	int option = 0;
 	int animation = 0;
-	char menu[7][20] = {
-		"View notes",
-		"Edit notes",
-		"Add notes",
-		"Remove notes",
-		"Save notes",
-		"Exit",
-		"Credits"
-	};
+
 	
 	// button stuff
 	SceCtrlData pad, oldpad;
@@ -100,8 +88,8 @@ int main (int argc, char *argv[]){
 	
 	/* Main loop */
 	while (running){
-		//if (def)
-		//	gfx_blitImageToScreen(0, 0, def->imageWidth, def->imageHeight, def, 0, 0);
+		// clear screen
+		gfx_clearScreen(WHITE);
 		
 		// read buttons
 		sceCtrlReadBufferPositive(&pad, 1);
@@ -129,14 +117,14 @@ int main (int argc, char *argv[]){
 					++option;
 				else
 					animation = 0;
-				sceKernelDelayThread(90000);
+				sceKernelDelayThread(75000);
 				break;
 			case 2: // go from highest to lowest option
 				if (option > 0)
 					--option;
 				else
 					animation = 0;
-				sceKernelDelayThread(90000);
+				sceKernelDelayThread(75000);
 				break;
 			default:
 				break;
@@ -164,13 +152,16 @@ int main (int argc, char *argv[]){
 			}
 		}
 		
-		gfx_clearScreen(WHITE);
-		gfx_guStart();
+		// show main image
+		if (main)
+			gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
 
+		gfx_guStart();
+		
 		// title
 		intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
 		intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
-		gfx_drawLineScreen(70, 26, 230, 26, BLACK);
+		gfx_drawLineScreen(70, 26, 245, 26, BLACK);
 		
 		// menu
 		for (int i = 0; i < sizeof(menu)/sizeof(menu[0]); i++){
