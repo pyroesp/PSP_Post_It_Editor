@@ -11,8 +11,9 @@ Navigate the menu with the up/down buttons.
 Select an option with X.
 
 ## Legacy
-Legacy code from the original homebrew.  
-Small changes so it compiles today.  
+Legacy code from the original homebrew is in the legacy branch.  
+I've made some changes so it compiles today.  
+Legacy code crashes on exit, haven't looked at why.  
 
 ## Credits
 kevinr for the graphics library.  
