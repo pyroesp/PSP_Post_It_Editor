@@ -89,6 +89,7 @@ int main (int argc, char *argv[]){
 			
 			cJSON_InitHooks(NULL);
 			json = cJSON_Parse(v);
+			free(v);
 		}
 	
 		fclose(fp);
@@ -118,6 +119,7 @@ int main (int argc, char *argv[]){
 	// other
 	int x = 0;
 	int option = 0;
+	int selected = -1;
 	int animation = 0;
 
 	// init gfx
@@ -131,105 +133,109 @@ int main (int argc, char *argv[]){
 		// read buttons
 		sceCtrlReadBufferPositive(&pad, 1);
 		
-		switch (animation){
-			case 0:
-				// check if up/down is pressed
-				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
-					--option;
-				else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
-					++option;
+		// check if O is pressed to return to main menu
+		if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+			selected = -1;
+		}
+		
+		// show different menu based of selected variable
+		switch (selected){
+			case -1: // show main menu
+				switch (animation){
+					case 0:
+						// check if up/down is pressed
+						if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
+							--option;
+						else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
+							++option;
+						
+						// set animation
+						if (option < 0){
+							animation = 1;
+							option = 0;
+						}
+						else if (option >= sizeof(main_menu)/sizeof(main_menu[0])){
+							animation = 2;
+							option = sizeof(main_menu)/sizeof(main_menu[0]) - 1;
+						}
+						break;
+					case 1: // go from lowest to highest option
+						if (option < sizeof(main_menu)/sizeof(main_menu[0]) - 1)
+							++option;
+						else
+							animation = 0;
+						sceKernelDelayThread(75000);
+						break;
+					case 2: // go from highest to lowest option
+						if (option > 0)
+							--option;
+						else
+							animation = 0;
+						sceKernelDelayThread(75000);
+						break;
+					default: // for all other values, reset
+						animation = 0;
+						break;
+				}
 				
-				// set animation
-				if (option < 0){
-					animation = 1;
-					option = 0;
+				// check if X is pressed
+				if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
+					selected = option;
 				}
-				else if (option >= sizeof(menu)/sizeof(menu[0])){
-					animation = 2;
-					option = sizeof(menu)/sizeof(menu[0]) - 1;
+				// show main image
+				if (main)
+					gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
+
+				gfx_guStart();
+				
+				// title
+				intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+				intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
+				gfx_drawLineScreen(70, 26, 245, 26, BLACK);
+				
+				// main_menu
+				for (int i = 0; i < sizeof(main_menu)/sizeof(main_menu[0]); i++){
+					if (i == option){
+						gfx_drawLineScreen(100, 26, 100, 66 + (20 * i), BLACK);
+						gfx_drawLineScreen(100, 66 + (20 * i), 125, 66 + (20 * i), BLACK);
+						gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
+						gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
+						
+						intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY, 0.0f, 0);
+						x = 140;
+					}else{
+						intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+						x = 120;
+					}
+
+					intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", main_menu[i]);
 				}
 				break;
-			case 1: // go from lowest to highest option
-				if (option < sizeof(menu)/sizeof(menu[0]) - 1)
-					++option;
-				else
-					animation = 0;
-				sceKernelDelayThread(75000);
+			case MM_VIEW:	
+				gfx_guStart();	
+				// view the post structure
+				if (post){
+					post_displayEvents(10, 10, post, ltn[1]);
+				}
 				break;
-			case 2: // go from highest to lowest option
-				if (option > 0)
-					--option;
-				else
-					animation = 0;
-				sceKernelDelayThread(75000);
+			case MM_ADD:
+				break;
+			case MM_EDIT:
+				break;
+			case MM_REMOVE:
+				break;
+			case MM_SAVE:
+				break;
+			case MM_CREDITS:
+				break;
+			// exit main loop if X is pressed on Exit option	
+			case MM_EXIT:
+				running = 0;
 				break;
 			default: // for all other values, reset
-				animation = 0;
+				option = 0;
+				selected = -1;
 				break;
-		}
-		
-		// check if X is pressed
-		if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
-			switch (option){
-				case VIEW:
-					break;
-				case ADD:
-					break;
-				case EDIT:
-					break;
-				case REMOVE:
-					break;
-				case SAVE:
-					break;
-				// exit main loop if X is pressed on Exit option	
-				case EXIT:
-					running = 0;
-					break;
-				case CREDITS:
-					break;
-				default: // for all other values, reset
-					option = 0;
-					break;
-			}
-		}
-		
-		// show main image
-		if (main)
-			gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
-
-		gfx_guStart();
-		
-		// title
-		intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-		intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
-		gfx_drawLineScreen(70, 26, 245, 26, BLACK);
-		
-		// menu
-		for (int i = 0; i < sizeof(menu)/sizeof(menu[0]); i++){
-			if (i == option){
-				gfx_drawLineScreen(100, 26, 100, 66 + (20 * i), BLACK);
-				gfx_drawLineScreen(100, 66 + (20 * i), 125, 66 + (20 * i), BLACK);
-				gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
-				gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
-				
-				intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY, 0.0f, 0);
-				x = 140;
-			}else{
-				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-				x = 120;
-			}
-
-			intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", menu[i]);
-		}
-		
-		// debug the post structure
-		if (post){
-			for (int i = 0; i < post->size; i++){
-				if (&post->event[i]){
-					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-					intraFontPrintf(ltn[1], 10, 200 + 10 * i, "%s", post->event[i].string);
-				}
-			}
 		}
 		
 		oldpad = pad;
@@ -242,8 +248,6 @@ int main (int argc, char *argv[]){
 	}
 	
 	/* Cleanup */
-	if (v)
-		free(v);
 	if(json)
 		cJSON_Delete(json);
 	if (post)
