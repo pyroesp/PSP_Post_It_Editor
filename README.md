@@ -8,7 +8,7 @@ Run ```make clean``` to clean the folder of the compiled files.
 
 ## Controls
 Navigate the menu with the up/down buttons.  
-Select an option with X.
+Select an option with X, return with O.  
 
 ## Legacy
 Legacy code from the original homebrew is in the legacy branch.  
