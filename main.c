@@ -6,6 +6,7 @@
 		kevinr for gfx
 		raytwo for images
 		Benhur for intraFont
+		DaveGamble for cJSON (v1.7.15)
 
 */
 
@@ -16,11 +17,15 @@
 #include <pspdebug.h>
 #include <pspgu.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <intraFont.h>
 
-
-#include "graphics.h"
 #include "resource.h"
+#include "graphics.h"
+#include "post_it.h"
+#include "cJSON/cJSON.h"
 
 
 PSP_MODULE_INFO("PSP Post It - Editor", 0, 1, 1);
@@ -47,7 +52,14 @@ int SetupCallbacks(void) {
 }
 
 
+extern void waitOnPress(void);
+
+
 int main (int argc, char *argv[]){
+	// init psp stuff
+	pspDebugScreenInit();
+	SetupCallbacks();
+	
 	// make default image
 	Image *def = NULL;
 	def = gfx_createDefaultImage();
@@ -57,20 +69,39 @@ int main (int argc, char *argv[]){
 	
 	if(!main)
 		main = def;
-	
-	int x = 0;
-	int option = 0;
-	int animation = 0;
 
+	
+	// cJSON stuff
+	char *v = NULL;
+	int size = 0;
+	FILE *fp;
+	cJSON *json = NULL;
+	
+	fp = fopen(POST_IT_PATH POST_IT_FILE, "r");
+	if (fp){
+		while(fgetc(fp) != EOF);
+		size = ftell(fp) + 1;
+		v = (char*)malloc(sizeof(char) * size);
+		if (v){
+			memset(v, 0, size);
+			rewind(fp);
+			fread(v, sizeof(char), size, fp);
+			
+			cJSON_InitHooks(NULL);
+			json = cJSON_Parse(v);
+		}
+	
+		fclose(fp);
+	}
+	
+	// post it stuff
+	PostIt *post;
+	post = post_readPostIt(json);
 	
 	// button stuff
 	SceCtrlData pad, oldpad;
 	sceCtrlReadBufferPositive(&oldpad, 1);
 	
-	// init psp stuff
-	pspDebugScreenInit();
-	SetupCallbacks();
-
 	// init intrafont
 	if (!intraFontInit())
 		sceKernelExitGame();
@@ -82,6 +113,12 @@ int main (int argc, char *argv[]){
 
 	if (!ltn[0] || !ltn[1])
 		sceKernelExitGame();
+
+
+	// other
+	int x = 0;
+	int option = 0;
+	int animation = 0;
 
 	// init gfx
 	gfx_initGraphics();
@@ -126,7 +163,8 @@ int main (int argc, char *argv[]){
 					animation = 0;
 				sceKernelDelayThread(75000);
 				break;
-			default:
+			default: // for all other values, reset
+				animation = 0;
 				break;
 		}
 		
@@ -149,6 +187,9 @@ int main (int argc, char *argv[]){
 					break;
 				case CREDITS:
 					break;
+				default: // for all other values, reset
+					option = 0;
+					break;
 			}
 		}
 		
@@ -166,13 +207,12 @@ int main (int argc, char *argv[]){
 		// menu
 		for (int i = 0; i < sizeof(menu)/sizeof(menu[0]); i++){
 			if (i == option){
-				intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY, 0.0f, 0);
-
 				gfx_drawLineScreen(100, 26, 100, 66 + (20 * i), BLACK);
 				gfx_drawLineScreen(100, 66 + (20 * i), 125, 66 + (20 * i), BLACK);
 				gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
 				gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
 				
+				intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY, 0.0f, 0);
 				x = 140;
 			}else{
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
@@ -180,6 +220,16 @@ int main (int argc, char *argv[]){
 			}
 
 			intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", menu[i]);
+		}
+		
+		// debug the post structure
+		if (post){
+			for (int i = 0; i < post->size; i++){
+				if (&post->event[i]){
+					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+					intraFontPrintf(ltn[1], 10, 200 + 10 * i, "%s", post->event[i].string);
+				}
+			}
 		}
 		
 		oldpad = pad;
@@ -192,7 +242,16 @@ int main (int argc, char *argv[]){
 	}
 	
 	/* Cleanup */
-	gfx_freeImage(def);
+	if (v)
+		free(v);
+	if(json)
+		cJSON_Delete(json);
+	if (post)
+		post_free(post);
+	if(def)
+		gfx_freeImage(def);
+	if (main)
+		gfx_freeImage(main);
 	intraFontUnload(ltn[0]);
 	intraFontUnload(ltn[1]);
 	

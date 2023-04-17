@@ -1,12 +1,12 @@
 TARGET = PSP_Post_It_Editor
-OBJS = main.o graphics.o framebuffer.o
+OBJS = main.o graphics.o framebuffer.o post_it.o ./cJSON/cJSON.o
 
-INCDIR =
+INCDIR = ./cJSON
 CFLAGS = -O2 -G0 -Wall -g
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
-LIBDIR =
+LIBDIR = ./cJSON
 LDFLAGS = 
 LIBS = -lintrafont -lpspgum -lpspgu -lpng -lz -lm -lpspctrl
 
