@@ -1,0 +1,20 @@
+{
+  "post it":[
+    {
+      "event": "Event 1",
+      "datetime": "2023-04-17 10:00"
+    },
+    {
+      "event": "Event 2",
+      "datetime": "2023-04-17 11:00",
+      "datepart":"hour",
+      "repeat": 1
+    },
+    {
+      "event": "Event 3",
+      "datetime": "2023-04-17 11:30",
+      "datepart":"minute",
+      "repeat": 30
+    }
+  ]
+}
