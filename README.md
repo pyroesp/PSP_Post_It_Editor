@@ -33,7 +33,8 @@ See below for an example of the json format:
   ]
 }
 ```  
-The datepart can be the following: ```year```, ```month```, ```day```, ```hour```, ```minute```.
+The datepart can be the following: ```year```, ```month```, ```day```, ```hour```, ```minute```.  
+Datepart and repeat are optional.  
 
 ## Plugin
 This homebrew should be used in conjuction with the PSP Post It PRX.  
