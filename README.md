@@ -4,10 +4,10 @@
 Use the [pspdev/pspdev docker image](https://hub.docker.com/r/pspdev/pspdev) and add [libintrafont](https://github.com/pspdev/libintraFont) to it.  
 
 Go to the source folder and run ```docker run -it --rm -v ${PWD}:/home/code pspdev/intrafont:intraFont```.  
-Navigate to ```/home/code``` and run ```make``` in to compile.  
-Run ```make clean``` to clean the folder of the compiled files.
+Navigate to ```/home/code``` and run ```make``` in it to compile.  
+Run ```make clean``` to clean the folder.
 
-Note that ```pspdev/intrafont:intraFont``` is a modified pspdev/pspdev image with intraFont added to it.  
+Note that ```pspdev/intrafont:intraFont``` is a modified pspdev/pspdev image I made with intraFont added to it.  
 
 ## Controls
 Navigate the menu with the up/down buttons.  
