@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "post_it.h"
+#include "graphics.h"
 
 
 void waitOnPress(void){
@@ -37,17 +38,17 @@ PostIt* post_readPostIt(cJSON *json){
 		return NULL;
 	
 	post->size = cJSON_GetArraySize(child);
-	post->event = (PostIt_Event*)malloc(sizeof(PostIt_Event) * post->size);
-	
+	post->event = (PostIt_Event*)malloc(sizeof(PostIt_Event) * post->size);	
 	if (!post->event)
 		return NULL;
 	
-	cJSON *temp = NULL;
+	memset(post->event, 0, sizeof(PostIt_Event) * post->size);
 	
+	cJSON *temp = NULL;
 	for (int i = 0; i < post->size; i++){
 		temp = cJSON_GetObjectItem(cJSON_GetArrayItem(child, i), "event");
 		if (temp)
-			post->event[i].string = temp->valuestring;
+			post->event[i].msg = temp->valuestring;
 		
 		temp = cJSON_GetObjectItem(cJSON_GetArrayItem(child, i), "datetime");
 		if (temp){
@@ -80,6 +81,25 @@ PostIt* post_readPostIt(cJSON *json){
 	}
 	
 	return post;
+}
+
+
+void post_displayEvents(int x, int y, PostIt* p, intraFont* font){
+	if (!p || !font)
+		return;
+	
+	intraFontSetStyle(font, 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+	for (int i = 0; i < p->size; i++){
+		intraFontPrintf(font, x, y + 45*i, 
+			"Event: %s\n    Datetime: %04d-%02d-%02d %02d:%02d\n    Datepart: %s\n    Repeat: %d\n",
+			p->event[i].msg,
+			p->event[i].dt.year, p->event[i].dt.month, p->event[i].dt.day, p->event[i].dt.hour, p->event[i].dt.minute,
+			!p->event[i].part ? "none" : 
+				p->event[i].part == YEAR ? "year" : p->event[i].part == MONTH ? "month" : p->event[i].part == DAY ? "day" : 
+				p->event[i].part == HOUR ? "hour" : p->event[i].part == MINUTE ? "minute" : "unkn",
+			!p->event[i].repeat ?  0 : p->event[i].repeat
+		);
+	}
 }
 
 
