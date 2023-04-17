@@ -13,25 +13,25 @@
 
 
 // use enum for quick constants
-enum eresMenu{
-	VIEW,
-	EDIT,
-	ADD,
-	REMOVE,
-	SAVE,
-	EXIT,
-	CREDITS	
+enum MainMenu{
+	MM_VIEW,
+	MM_EDIT,
+	MM_ADD,
+	MM_REMOVE,
+	MM_SAVE,
+	MM_CREDITS,
+	MM_EXIT
 };
 
 
-char menu[7][20] = {
-	"View notes",
-	"Edit notes",
-	"Add notes",
-	"Remove notes",
-	"Save notes",
-	"Exit",
-	"Credits"
+char main_menu[7][10] = {
+	"View",
+	"Edit",
+	"Add",
+	"Remove",
+	"Save",
+	"Credits",
+	"Exit"
 };
 
 
