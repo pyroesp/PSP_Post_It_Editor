@@ -25,7 +25,6 @@
 #include "resource.h"
 #include "graphics.h"
 #include "post_it.h"
-#include "cJSON/cJSON.h"
 
 
 PSP_MODULE_INFO("PSP Post It - Editor", 0, 1, 1);
@@ -52,7 +51,25 @@ int SetupCallbacks(void) {
 }
 
 
-extern void waitOnPress(void);
+
+void waitOnPress(void){
+	SceCtrlData pad;
+	sceCtrlReadBufferPositive(&pad, 1);
+	
+	while(pad.Buttons & PSP_CTRL_CIRCLE){
+		sceCtrlReadBufferPositive(&pad, 1);
+		sceKernelDelayThread(100000);
+	}
+	while(!(pad.Buttons & PSP_CTRL_CIRCLE)){
+		sceCtrlReadBufferPositive(&pad, 1);
+		sceKernelDelayThread(100000);
+	}
+	while(pad.Buttons & PSP_CTRL_CIRCLE){
+		sceCtrlReadBufferPositive(&pad, 1);
+		sceKernelDelayThread(100000);
+	}
+}
+
 
 
 int main (int argc, char *argv[]){
@@ -63,45 +80,36 @@ int main (int argc, char *argv[]){
 	// make default image
 	Image *def = NULL;
 	def = gfx_createDefaultImage();
-	// load main
+	// load main and menu bg
 	Image *main = NULL;
 	main = gfx_loadImage(RES_IMAGE_PATH RES_MAIN);
+	Image **menu_bg = NULL;
+	menu_bg = (Image**)malloc(sizeof(Image*) * RES_MENU_OPTIONS);
+	menu_bg[0] = gfx_loadImage(RES_IMAGE_PATH RES_VIEW);
+	menu_bg[1] = gfx_loadImage(RES_IMAGE_PATH RES_EDIT);
+	menu_bg[2] = gfx_loadImage(RES_IMAGE_PATH RES_ADD);
+	menu_bg[3] = gfx_loadImage(RES_IMAGE_PATH RES_REMOVE);
+	menu_bg[4] = gfx_loadImage(RES_IMAGE_PATH RES_SAVE);
+	menu_bg[5] = gfx_loadImage(RES_IMAGE_PATH RES_CREDIT);
+	menu_bg[6] = gfx_loadImage(RES_IMAGE_PATH RES_EXIT);
 	
 	if(!main)
 		main = def;
+	for (int i = 0; i < RES_MENU_OPTIONS; i++)
+		if(!menu_bg[i])
+			menu_bg[i] = def;
 
 	
-	// cJSON stuff
-	char *v = NULL;
-	int size = 0;
-	FILE *fp;
-	cJSON *json = NULL;
-	
-	fp = fopen(POST_IT_PATH POST_IT_FILE, "r");
-	if (fp){
-		while(fgetc(fp) != EOF);
-		size = ftell(fp) + 1;
-		v = (char*)malloc(sizeof(char) * size);
-		if (v){
-			memset(v, 0, size);
-			rewind(fp);
-			fread(v, sizeof(char), size, fp);
-			
-			cJSON_InitHooks(NULL);
-			json = cJSON_Parse(v);
-			free(v);
-		}
-	
-		fclose(fp);
-	}
-	
 	// post it stuff
-	PostIt *post;
-	post = post_readPostIt(json);
+	PostIt *post = NULL;	
+	post = post_initPostIt();
+	post_readJson(post, POST_IT_PATH_REL POST_IT_FILE);
+	post_convertJsonToPostIt(post);
 	
 	// button stuff
 	SceCtrlData pad, oldpad;
 	sceCtrlReadBufferPositive(&oldpad, 1);
+	
 	
 	// init intrafont
 	if (!intraFontInit())
@@ -115,12 +123,13 @@ int main (int argc, char *argv[]){
 	if (!ltn[0] || !ltn[1])
 		sceKernelExitGame();
 
-
 	// other
 	int x = 0;
 	int option = 0;
 	int selected = -1;
 	int animation = 0;
+	int edit_event = 0;
+	int do_once = 0;
 
 	// init gfx
 	gfx_initGraphics();
@@ -132,17 +141,44 @@ int main (int argc, char *argv[]){
 		
 		// read buttons
 		sceCtrlReadBufferPositive(&pad, 1);
+
 		
+		// show bg
+		if (selected == -1){
+			if (main)
+				gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
+		}else{
+			if (menu_bg[selected])
+				gfx_blitImageToScreen(0, 0, menu_bg[selected]->imageWidth, menu_bg[selected]->imageHeight, menu_bg[selected], 0, 0);
+		}
+
 		// check if O is pressed to return to main menu
 		if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
 			selected = -1;
 		}
+
+		
+		// start gfx
+		gfx_guStart();	
+		
+		
+		// title
+		intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+		intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
+		gfx_drawLineScreen(70, 26, 245, 26, BLACK);
 		
 		// show different menu based of selected variable
 		switch (selected){
 			case -1: // show main menu
+				do_once = 0;
+				edit_event = 0;
 				switch (animation){
 					case 0:
+						// check if X is pressed
+						if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
+							selected = option;
+						}
+						
 						// check if up/down is pressed
 						if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
 							--option;
@@ -178,21 +214,6 @@ int main (int argc, char *argv[]){
 						break;
 				}
 				
-				// check if X is pressed
-				if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
-					selected = option;
-				}
-				// show main image
-				if (main)
-					gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
-
-				gfx_guStart();
-				
-				// title
-				intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-				intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
-				gfx_drawLineScreen(70, 26, 245, 26, BLACK);
-				
 				// main_menu
 				for (int i = 0; i < sizeof(main_menu)/sizeof(main_menu[0]); i++){
 					if (i == option){
@@ -211,20 +232,72 @@ int main (int argc, char *argv[]){
 					intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", main_menu[i]);
 				}
 				break;
+			case MM_EDIT:
+				// check if up/down is pressed
+				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
+					--edit_event;
+				else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
+					++edit_event;
+				
+				if (edit_event < 0)
+					edit_event = 0;
+				else if (edit_event > (post->size - 1))
+					edit_event = post->size - 1;
+				
+				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+				intraFontPrintf(ltn[1], 20, 40 + 45 * edit_event, ">", edit_event);
+			
 			case MM_VIEW:	
-				gfx_guStart();	
 				// view the post structure
 				if (post){
-					post_displayEvents(10, 10, post, ltn[1]);
+					if (pad.Buttons & PSP_CTRL_LTRIGGER || selected == MM_EDIT)
+						post_displayEvents(30, 40, post, ltn[1]);
+					else
+						post_displayJSON(30, 40, post, ltn[1]);
 				}
 				break;
 			case MM_ADD:
-				break;
-			case MM_EDIT:
+				// add event to post
+				if(post && !do_once){
+					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+					int add_event = post_addEvent(post);
+					if (add_event){
+						// test values to add to json
+						post_addMessage(post, "Hello World");
+						pspTime t;
+						sceRtcGetCurrentClockLocalTime(&t);
+						post_addDateTime(post, t);
+						post_addDatePart(post, YEAR);
+						post_addRepeat(post, 1);
+					}
+					
+					post_convertJsonToPostIt(post);
+					do_once = 1;
+				}
+				
+				if (do_once)
+					intraFontPrintf(ltn[1], 30, 40, "Event added.\nPress O to go back...");
 				break;
 			case MM_REMOVE:
 				break;
 			case MM_SAVE:
+				if (!do_once){
+					FILE *fp;
+					fp = fopen(POST_IT_PATH_REL POST_IT_FILE, "w");
+					if (fp){
+						char *buffer = cJSON_Print(post->json);
+						if(buffer){
+							fwrite(buffer, sizeof(char), strlen(buffer) + 1, fp);
+							free(buffer);
+						}
+						fclose(fp);
+					}
+					do_once = 1;
+				}
+				
+				if (do_once){
+					intraFontPrintf(ltn[1], 30, 40, "JSON saved.\nPress O to go back...");
+				}
 				break;
 			case MM_CREDITS:
 				break;
@@ -248,14 +321,15 @@ int main (int argc, char *argv[]){
 	}
 	
 	/* Cleanup */
-	if(json)
-		cJSON_Delete(json);
-	if (post)
-		post_free(post);
+	if (post) // cleans up json too
+		post_freeAll(post);
 	if(def)
 		gfx_freeImage(def);
 	if (main)
 		gfx_freeImage(main);
+	for (int i = 0; i < RES_MENU_OPTIONS; i++)
+		if(menu_bg[i])
+			gfx_freeImage(menu_bg[i]);
 	intraFontUnload(ltn[0]);
 	intraFontUnload(ltn[1]);
 	
