@@ -26,16 +26,21 @@ The concept for the new code rewrite is to use a json file to setup events with 
 See below for an example of the json format:
 ```
 {
-  "post it":[
-    {
-      "event": "String to display",
-      "datetime": "2023-04-17 10:00"
-      "datepart":"year",
-      "repeat": 1
-    }
-  ]
+	"post it":[
+		{
+			"event": "Birthday of X",
+			"datetime": "2023-04-17 14:00"
+			"datepart":"year",
+			"repeat": 1
+		},
+		{
+			"event": "Take out trash",
+			"datetime": "2023-04-23 08:00"
+		}
+	]
 }
 ```  
+The datetime is formatted as ```YYYY-MM-DD HH:MM```, with the time part in 24-hour notation.
 The datepart can be the following: ```year```, ```month```, ```day```, ```hour```, ```minute```.  
 Datepart and repeat are optional.  
 
@@ -50,6 +55,5 @@ Benhur for [intraFont](https://github.com/pspdev/libintraFont).
 DaveGamble for [cJSON](https://github.com/DaveGamble/cJSON), at the time of writing the library is at v1.7.15.  
 
 ## License
-All code except cJSON is under Creative Commons [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).  
-
-Note that cJSON is under MIT license, more info at the [cJSON github](https://github.com/DaveGamble/cJSON).  
+All code, except cJSON, is under Creative Commons [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).  
+cJSON is under MIT license, more info on the [cJSON github](https://github.com/DaveGamble/cJSON) page.  
