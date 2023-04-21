@@ -40,7 +40,7 @@ See below for an example of the json format:
 	]
 }
 ```  
-The datetime is formatted as ```YYYY-MM-DD HH:MM```, with the time part in 24-hour notation.
+The datetime is formatted as ```YYYY-MM-DD HH:MM```, with the time part in 24-hour notation.  
 The datepart can be the following: ```year```, ```month```, ```day```, ```hour```, ```minute```.  
 Datepart and repeat are optional.  
 
