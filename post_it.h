@@ -17,12 +17,22 @@
 #define POST_IT_JSON_DATEPART 	"datepart"
 #define POST_IT_JSON_REPEAT 	"repeat"
 
-
 #define POST_IT_SIZE_DATETIME 17
 #define POST_IT_SIZE_DATEPART 7
 
+
 typedef enum{
-	NONE,
+	Add_None = 0,
+	Add_Message,
+	Add_Datetime,
+	Add_Datepart,
+	Add_Repeat,
+	Add_Done
+}AddSteps;
+
+
+typedef enum{
+	NONE = 0,
 	HOUR,
 	MINUTE,
 	YEAR,
