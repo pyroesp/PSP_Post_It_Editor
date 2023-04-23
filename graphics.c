@@ -219,12 +219,10 @@ void gfx_clearScreen(u32 color){
 void gfx_fillScreenRect(u32 color, int x0, int y0, int width, int height){
 	if (!initialized) 
 		return;
-	int skipX = PSP_LINE_SIZE - width;
-	int x, y;
-	u32* data = gfx_getVramDrawBuffer() + x0 + y0 * PSP_LINE_SIZE;
-	for (y = 0; y < height; y++, data += skipX)
-		for (x = 0; x < width; x++, data++)
-			*data = color;
+	u32* data = gfx_getVramDrawBuffer();
+	for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++)
+			data[(x + x0) + (y + y0) * PSP_LINE_SIZE] = color;
 }
 
 void gfx_putPixelScreen(u32 color, int x, int y){

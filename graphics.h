@@ -26,10 +26,16 @@
 #define DARKCYAN 	((u32)0xFF9D7B13)
 #define YELLOW 		((u32)0xFF00F3F3)
 #define WHITE 		((u32)0xFFFFFFFF)
-#define LITEGRAY 	((u32)0xFFBFBFBF)
+#define LIGHTGRAY 	((u32)0xFFBFBFBF)
 #define GRAY 		((u32)0xFF7F7F7F)
 #define DARKGRAY 	((u32)0xFF3F3F3F)
 #define BLACK 		((u32)0xFF000000)
+
+#define ALPHA_0		((u32)0x00FFFFFF)
+#define ALPHA_25	((u32)0x40FFFFFF)
+#define ALPHA_50	((u32)0x80FFFFFF)
+#define ALPHA_75	((u32)0xC0FFFFFF)
+#define ALPHA_100	((u32)0xFFFFFFFF)
 
 
 typedef struct
