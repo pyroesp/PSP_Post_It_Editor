@@ -9,12 +9,11 @@
 #define RES_REMOVE 		"remove.png"
 #define RES_SAVE 		"save.png"
 #define RES_CREDIT 		"credit.png"
-#define RES_EXIT 		"exit.png"
 
 
 // use enum for quick constants
 enum MainMenu{
-	MM_VIEW,
+	MM_VIEW = 0,
 	MM_EDIT,
 	MM_ADD,
 	MM_REMOVE,
