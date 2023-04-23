@@ -53,6 +53,7 @@ kevinr for the graphics library.
 raytwo for all the images.  
 Benhur for [intraFont](https://github.com/pspdev/libintraFont).  
 DaveGamble for [cJSON](https://github.com/DaveGamble/cJSON), at the time of writing the library is at v1.7.15.  
+Everyone on the [pspdev github](https://github.com/pspdev) and [discord community](https://discord.gg/bePrj9W) for continued [pspsdk](https://github.com/pspdev/pspsdk) support and help.  
 
 ## License
 All code, except cJSON, is under Creative Commons [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).  
