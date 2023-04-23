@@ -25,6 +25,7 @@
 #include "resource.h"
 #include "graphics.h"
 #include "post_it.h"
+#include "osk.h"
 
 
 PSP_MODULE_INFO("PSP Post It - Editor", 0, 1, 1);
@@ -84,14 +85,13 @@ int main (int argc, char *argv[]){
 	Image *main = NULL;
 	main = gfx_loadImage(RES_IMAGE_PATH RES_MAIN);
 	Image **menu_bg = NULL;
-	menu_bg = (Image**)malloc(sizeof(Image*) * RES_MENU_OPTIONS);
+	menu_bg = (Image**)malloc(sizeof(Image*) * (RES_MENU_OPTIONS - 1));
 	menu_bg[0] = gfx_loadImage(RES_IMAGE_PATH RES_VIEW);
 	menu_bg[1] = gfx_loadImage(RES_IMAGE_PATH RES_EDIT);
 	menu_bg[2] = gfx_loadImage(RES_IMAGE_PATH RES_ADD);
 	menu_bg[3] = gfx_loadImage(RES_IMAGE_PATH RES_REMOVE);
 	menu_bg[4] = gfx_loadImage(RES_IMAGE_PATH RES_SAVE);
 	menu_bg[5] = gfx_loadImage(RES_IMAGE_PATH RES_CREDIT);
-	menu_bg[6] = gfx_loadImage(RES_IMAGE_PATH RES_EXIT);
 	
 	if(!main)
 		main = def;
@@ -105,6 +105,16 @@ int main (int argc, char *argv[]){
 	post = post_initPostIt();
 	post_readJson(post, POST_IT_PATH_REL POST_IT_FILE);
 	post_convertJsonToPostIt(post);
+	
+	//keyboard stuff
+	Osk kb;
+	unsigned short *desc = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+	unsigned short *intext = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+	unsigned short *outtext = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+	memset(desc, 0, sizeof(unsigned short) * OSK_STRING_SIZE);
+	memset(intext, 0, sizeof(unsigned short) * OSK_STRING_SIZE);
+	memset(outtext, 0, sizeof(unsigned short) * OSK_STRING_SIZE);
+	osk_init(&kb, desc, intext, outtext);
 	
 	// button stuff
 	SceCtrlData pad, oldpad;
@@ -125,11 +135,13 @@ int main (int argc, char *argv[]){
 
 	// other
 	int x = 0;
+	int do_once = 0;
 	int option = 0;
 	int selected = -1;
 	int animation = 0;
+	int add_event = 0;
 	int edit_event = 0;
-	int do_once = 0;
+	AddSteps step = Add_None;
 
 	// init gfx
 	gfx_initGraphics();
@@ -147,16 +159,10 @@ int main (int argc, char *argv[]){
 		if (selected == -1){
 			if (main)
 				gfx_blitImageToScreen(0, 0, main->imageWidth, main->imageHeight, main, 0, 0);
-		}else{
+		}else if (selected != MM_EXIT){
 			if (menu_bg[selected])
 				gfx_blitImageToScreen(0, 0, menu_bg[selected]->imageWidth, menu_bg[selected]->imageHeight, menu_bg[selected], 0, 0);
 		}
-
-		// check if O is pressed to return to main menu
-		if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
-			selected = -1;
-		}
-
 		
 		// start gfx
 		gfx_guStart();	
@@ -177,6 +183,10 @@ int main (int argc, char *argv[]){
 						// check if X is pressed
 						if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
 							selected = option;
+						}
+						// check if O is pressed to return to main menu
+						if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+							selected = -1;
 						}
 						
 						// check if up/down is pressed
@@ -222,10 +232,10 @@ int main (int argc, char *argv[]){
 						gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
 						gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
 						
-						intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY, 0.0f, 0);
+						intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY & ALPHA_50, 0.0f, 0);
 						x = 140;
 					}else{
-						intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+						intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 						x = 120;
 					}
 
@@ -233,6 +243,10 @@ int main (int argc, char *argv[]){
 				}
 				break;
 			case MM_EDIT:
+				// check if O is pressed to return to main menu
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					selected = -1;
+				}
 				// check if up/down is pressed
 				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
 					--edit_event;
@@ -244,10 +258,14 @@ int main (int argc, char *argv[]){
 				else if (edit_event > (post->size - 1))
 					edit_event = post->size - 1;
 				
-				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
+				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 				intraFontPrintf(ltn[1], 20, 40 + 45 * edit_event, ">", edit_event);
 			
-			case MM_VIEW:	
+			case MM_VIEW:
+				// check if O is pressed to return to main menu
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					selected = -1;
+				}	
 				// view the post structure
 				if (post){
 					if (pad.Buttons & PSP_CTRL_LTRIGGER || selected == MM_EDIT)
@@ -258,27 +276,29 @@ int main (int argc, char *argv[]){
 				break;
 			case MM_ADD:
 				// add event to post
-				if(post && !do_once){
-					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-					int add_event = post_addEvent(post);
-					if (add_event){
-						// test values to add to json
-						post_addMessage(post, "Hello World");
-						pspTime t;
-						sceRtcGetCurrentClockLocalTime(&t);
-						post_addDateTime(post, t);
-						post_addDatePart(post, YEAR);
-						post_addRepeat(post, 1);
+				if(post){
+					if (!do_once){
+						add_event = post_addEvent(post);
+						do_once = 1;
+						step = Add_Message;
+					}else{
+						gfx_fillScreenRect(LIGHTGRAY, SCREEN_WIDTH / 2, 220, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 220);
+						if (!add_event){
+							// check if O is pressed to return to main menu
+							if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+								selected = -1;
+							}
+							intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
+							intraFontPrintf(ltn[1], 30, 40, "Event added.\nPress O to go back...");
+						}
 					}
-					
-					post_convertJsonToPostIt(post);
-					do_once = 1;
 				}
-				
-				if (do_once)
-					intraFontPrintf(ltn[1], 30, 40, "Event added.\nPress O to go back...");
 				break;
 			case MM_REMOVE:
+				// check if O is pressed to return to main menu
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					selected = -1;
+				}
 				break;
 			case MM_SAVE:
 				if (!do_once){
@@ -296,10 +316,19 @@ int main (int argc, char *argv[]){
 				}
 				
 				if (do_once){
+					// check if O is pressed to return to main menu
+					if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+						selected = -1;
+					}
+					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 					intraFontPrintf(ltn[1], 30, 40, "JSON saved.\nPress O to go back...");
 				}
 				break;
 			case MM_CREDITS:
+				// check if O is pressed to return to main menu
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					selected = -1;
+				}
 				break;
 			// exit main loop if X is pressed on Exit option	
 			case MM_EXIT:
@@ -316,6 +345,109 @@ int main (int argc, char *argv[]){
 		sceGuFinish();
 		sceGuSync(0,0);
 		
+		
+		// OSK stuff
+		switch (selected){
+			case MM_ADD:
+				// add event to post
+				if (add_event){
+					char *ascii = (char*)malloc(sizeof(char) * OSK_STRING_SIZE);
+					unsigned short *uni1 = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+					unsigned short *uni2 = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+					switch (step){
+						case Add_Message:	
+							osk_convertCharToUnsignedShort(POST_IT_JSON_MESSAGE, uni1);
+							osk_updateOskParam(&kb, uni1, NULL, NULL);
+							break;
+						case Add_Datetime:
+							pspTime t;
+							sceRtcGetCurrentClockLocalTime(&t);
+							sprintf(ascii, "%04hu-%02hu-%02hu %02hu:%02hu",
+								t.year, t.month, t.day, t.hour, t.minutes
+							);
+							
+							osk_convertCharToUnsignedShort(POST_IT_JSON_DATETIME, uni1);
+							osk_convertCharToUnsignedShort(ascii, uni2);
+							osk_updateOskParam(&kb, uni1, uni2, NULL);
+							break;
+						case Add_Datepart:
+							osk_convertCharToUnsignedShort(POST_IT_JSON_DATEPART, uni1);
+							osk_updateOskParam(&kb, uni1, NULL, NULL);
+							break;
+						case Add_Repeat:
+							osk_convertCharToUnsignedShort(POST_IT_JSON_REPEAT, uni1);
+							osk_updateOskParam(&kb, uni1, NULL, NULL);
+							break;
+						case Add_Done:
+							post_convertJsonToPostIt(post);
+							add_event = 0;
+							break;
+						default:
+							break;
+					}
+					free(uni1);
+					free(uni2);
+					
+					if (step != Add_Done){
+						osk_start(&kb);
+						if (osk_showOsk(&kb)){
+							// convert osk unicode string to ascii
+							osk_convertUnsignedShortToChar(kb.data->outtext, ascii);
+							
+							switch (step){
+								case Add_Message:
+									post_addMessage(post, ascii);
+									step = Add_Datetime;
+									break;
+								case Add_Datetime:
+									pspTime t;
+									sscanf(ascii, "%hu%*c%hu%*c%hu %hu%*c%hu", 
+										&t.year, &t.month, &t.day, &t.hour, &t.minutes
+									);
+									post_addDateTime(post, t);
+									step = Add_Datepart;
+									break;
+								case Add_Datepart:
+									if(strcmp(ascii, "")){ // if not empty
+										if (!strcmp(ascii, "hour"))
+											post_addDatePart(post, HOUR);
+										else if (!strcmp(ascii, "minute"))
+											post_addDatePart(post, MINUTE);
+										else if (!strcmp(ascii, "year"))
+											post_addDatePart(post, YEAR);
+										else if (!strcmp(ascii, "month"))
+											post_addDatePart(post, MONTH);
+										else if (!strcmp(ascii, "day"))
+											post_addDatePart(post, DAY);
+										step = Add_Repeat;
+									}else{
+										step = Add_Done;
+									}
+									break;
+								case Add_Repeat:
+									if(strcmp(ascii, "")){ // if not empty
+										int x = 0;
+										sscanf(ascii, "%d", &x);
+										post_addRepeat(post, x);
+									}
+									step = Add_Done;
+									break;
+								default:
+									step = Add_Done;
+									break;
+							}
+							
+							osk_stop(&kb);
+						}
+					}
+					
+					free(ascii);
+				}
+				break;
+			default:
+				break;
+		}
+		
 		sceDisplayWaitVblankStart();
 		gfx_flipScreen();
 	}
@@ -327,11 +459,12 @@ int main (int argc, char *argv[]){
 		gfx_freeImage(def);
 	if (main)
 		gfx_freeImage(main);
-	for (int i = 0; i < RES_MENU_OPTIONS; i++)
+	for (int i = 0; i < RES_MENU_OPTIONS - 1; i++)
 		if(menu_bg[i])
 			gfx_freeImage(menu_bg[i]);
-	intraFontUnload(ltn[0]);
+	intraFontUnload(ltn[0]);	
 	intraFontUnload(ltn[1]);
+	osk_free(&kb);
 	
 	/* Shutdown */
 	gfx_disableGraphics();
