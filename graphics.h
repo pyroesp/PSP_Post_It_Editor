@@ -22,6 +22,7 @@
 #define RED			((u32)0xFF0000FF)
 #define GREEN		((u32)0xFF00FF00)
 #define BLUE		((u32)0xFFFF0000)
+#define LIGHTCYAN 	((u32)0xFFE8CE7A)
 #define CYAN 		((u32)0xFFE8BD3C)
 #define DARKCYAN 	((u32)0xFF9D7B13)
 #define YELLOW 		((u32)0xFF00F3F3)
@@ -38,8 +39,12 @@
 #define ALPHA_100	((u32)0xFFFFFFFF)
 
 
-typedef struct
-{
+typedef struct{
+	int x, y;
+	int w, h;
+}Rect;
+
+typedef struct{
 	int textureWidth;	// the real width of data, 2^n with n>=0
 	int textureHeight;	// the real height of data, 2^n with n>=0
 	int imageWidth;		// the image width
@@ -48,7 +53,7 @@ typedef struct
 	int color_type;		// png color type (for debug)
 	int rowbytes;		// png rowbytes (for debug)
 	u32* data;			// pixel data
-} Image;
+}Image;
 
 
 Image* gfx_loadImage(const char* filename);
