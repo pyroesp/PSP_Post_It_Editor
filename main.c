@@ -141,6 +141,7 @@ int main (int argc, char *argv[]){
 	int animation = 0;
 	int add_event = 0;
 	int edit_event = 0;
+	int remove_event = 0;
 	AddSteps step = Add_None;
 
 	// init gfx
@@ -178,6 +179,8 @@ int main (int argc, char *argv[]){
 			case -1: // show main menu
 				do_once = 0;
 				edit_event = 0;
+				add_event = 0;
+				remove_event = 0;
 				switch (animation){
 					case 0:
 						// check if X is pressed
@@ -242,6 +245,19 @@ int main (int argc, char *argv[]){
 					intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", main_menu[i]);
 				}
 				break;
+			case MM_VIEW:
+				// check if O is pressed to return to main menu
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					selected = -1;
+				}	
+				// view the post structure
+				if (post){
+					if (pad.Buttons & PSP_CTRL_LTRIGGER)
+						post_displayEvents(30, 40, post, ltn[1]);
+					else
+						post_displayJSON(30, 40, post, ltn[1]);
+				}
+				break;
 			case MM_EDIT:
 				// check if O is pressed to return to main menu
 				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
@@ -255,24 +271,12 @@ int main (int argc, char *argv[]){
 				
 				if (edit_event < 0)
 					edit_event = 0;
-				else if (edit_event > (post->size - 1))
+				else if (edit_event >= post->size)
 					edit_event = post->size - 1;
 				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 20, 40 + 45 * edit_event, ">", edit_event);
-			
-			case MM_VIEW:
-				// check if O is pressed to return to main menu
-				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
-					selected = -1;
-				}	
-				// view the post structure
-				if (post){
-					if (pad.Buttons & PSP_CTRL_LTRIGGER || selected == MM_EDIT)
-						post_displayEvents(30, 40, post, ltn[1]);
-					else
-						post_displayJSON(30, 40, post, ltn[1]);
-				}
+				intraFontPrintf(ltn[1], 20, 40 + 45 * edit_event, ">");
+				post_displayEvents(30, 40, post, ltn[1]);
 				break;
 			case MM_ADD:
 				// add event to post
@@ -299,6 +303,27 @@ int main (int argc, char *argv[]){
 				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
 					selected = -1;
 				}
+				// check if X is pressed
+				if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
+					if (post_removeEvent(post, remove_event)){
+						post_convertJsonToPostIt(post);
+					}
+				}
+				
+				// check if up/down is pressed
+				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
+					--remove_event;
+				else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
+					++remove_event;
+				
+				if (remove_event < 0)
+					remove_event = 0;
+				else if (remove_event >= post->size)
+					remove_event = post->size - 1;
+				
+				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
+				intraFontPrintf(ltn[1], 20, 40 + 45 * remove_event, ">");
+				post_displayEvents(30, 40, post, ltn[1]);
 				break;
 			case MM_SAVE:
 				if (!do_once){
@@ -374,7 +399,7 @@ int main (int argc, char *argv[]){
 							osk_updateOskParam(&kb, uni1, uni2, NULL);
 							break;
 						case Add_Datepart:
-							osk_convertCharToUnsignedShort(POST_IT_JSON_DATEPART, uni1);
+							osk_convertCharToUnsignedShort(POST_IT_JSON_DATEPART " (" POST_IT_DATEPART_OPTIONS ")", uni1);
 							osk_updateOskParam(&kb, uni1, NULL, NULL);
 							break;
 						case Add_Repeat:
