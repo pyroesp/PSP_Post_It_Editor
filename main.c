@@ -143,6 +143,8 @@ int main (int argc, char *argv[]){
 	int edit_event = 0;
 	int remove_event = 0;
 	AddSteps step = Add_None;
+	
+	Rect r;
 
 	// init gfx
 	gfx_initGraphics();
@@ -274,9 +276,29 @@ int main (int argc, char *argv[]){
 				else if (edit_event >= post->size)
 					edit_event = post->size - 1;
 				
+				#define SCROLL_LINE_H		150
+				#define SCROLL_LINE_X		10
+				#define SCROLL_BAR_OFFSET	5
+				#define SCROLL_BAR_W		11
+				#define SCROLL_BAR_H		(SCROLL_LINE_H - (SCROLL_BAR_OFFSET * 2))
+				#define SCROLL_BAR_X		5
+				
+				r.w = SCROLL_BAR_W;
+				r.h = SCROLL_BAR_H / post->size;
+				r.x = SCROLL_BAR_X;
+				r.y = (SCREEN_HEIGHT - SCROLL_BAR_H) / 2 + edit_event * r.h;
+				
+				gfx_drawLineScreen(
+					SCROLL_LINE_X, (SCREEN_HEIGHT - SCROLL_LINE_H) / 2, 
+					SCROLL_LINE_X, (SCREEN_HEIGHT - SCROLL_LINE_H) / 2 + SCROLL_LINE_H, 
+					BLACK
+				);
+				gfx_fillScreenRect(LIGHTCYAN & ALPHA_50, r.x + 2, r.y + 2, r.w, r.h);
+				gfx_fillScreenRect(DARKCYAN, r.x, r.y, r.w, r.h);
+				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 20, 40 + 45 * edit_event, ">");
-				post_displayEvents(30, 40, post, ltn[1]);
+				intraFontPrintf(ltn[1], 30, 60 + 45 * edit_event, ">");
+				post_displayEvents(40, 60, post, ltn[1]);
 				break;
 			case MM_ADD:
 				// add event to post
