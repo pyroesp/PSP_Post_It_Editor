@@ -329,12 +329,15 @@ int main (int argc, char *argv[]){
 				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
 					selected = -1;
 				}
+				
+				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
+				intraFontPrintf(ltn[1], 30, 40, credits);
 				break;
 			// exit main loop if X is pressed on Exit option	
 			case MM_EXIT:
 				running = 0;
 				break;
-			default: // for all other values, reset
+			default: // for all other unknown values, reset
 				option = 0;
 				selected = -1;
 				break;

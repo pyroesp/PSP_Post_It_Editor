@@ -35,5 +35,14 @@ char main_menu[RES_MENU_OPTIONS][10] = {
 	"Exit"
 };
 
+char credits[] = {
+"- kevinr for the graphics library\n\
+- raytwo for all the images\n\
+- Benhur for intraFont\n\
+- DaveGamble for cJSON\n\
+- Everyone on the pspdev github and\n\
+    discord community"
+};
+
 
 #endif
