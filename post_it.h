@@ -17,6 +17,8 @@
 #define POST_IT_JSON_DATEPART 	"datepart"
 #define POST_IT_JSON_REPEAT 	"repeat"
 
+#define POST_IT_DATEPART_OPTIONS "year, month, day, hour, minute"
+
 #define POST_IT_SIZE_DATETIME 17
 #define POST_IT_SIZE_DATEPART 7
 
@@ -68,6 +70,7 @@ void post_convertJsonToPostIt(PostIt *post);
 int post_convertToTick(const pspTime *t, u64 *tick);
 int post_convertToTimeStruct(const u64 *tick, pspTime *t);
 
+int post_removeEvent(PostIt *post, int event_index);
 
 int post_addEvent(PostIt *post);
 void post_addMessage(PostIt *post, char *msg);
