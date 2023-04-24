@@ -126,6 +126,19 @@ int post_convertToTimeStruct(const u64 *tick, pspTime *t){
 	return sceRtcSetTick(t, tick);
 }
 
+int post_removeEvent(PostIt *post, int event_index){
+	if (post){
+		if (post->json){
+			int size = cJSON_GetArraySize(post->json->child);
+			if (event_index < size){
+				cJSON_DeleteItemFromArray(post->json->child, event_index);
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 
 int post_addEvent(PostIt *post){
 	if (!post)
@@ -232,10 +245,9 @@ void post_displayEvents(int x, int y, PostIt* p, intraFont* font){
 	intraFontSetStyle(font, 0.9f, BLACK, DARKGRAY, 0.0f, 0);
 	for (i = 0; i < p->size; i++){
 		intraFontPrintf(font, x, y + 45*i, 
-			"Event (%d): %s\n    Datetime: %04hu-%02hu-%02hu %02hu:%02hu - %llu\n    Datepart: %s\n    Repeat: %d\n",
+			"Event (%d): %s\n    Datetime: %04hu-%02hu-%02hu %02hu:%02hu\n    Datepart: %s\n    Repeat: %d\n",
 			i, p->event[i].msg,
 			p->event[i].dt.year, p->event[i].dt.month, p->event[i].dt.day, p->event[i].dt.hour, p->event[i].dt.minutes,
-			p->event[i].tick,
 			!p->event[i].part ? "none" : 
 				p->event[i].part == YEAR ? "year" : p->event[i].part == MONTH ? "month" : p->event[i].part == DAY ? "day" : 
 				p->event[i].part == HOUR ? "hour" : p->event[i].part == MINUTE ? "minute" : "unkn",
