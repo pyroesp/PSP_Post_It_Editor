@@ -48,6 +48,16 @@ Datepart and repeat are optional.
 This homebrew should be used in conjuction with the PSP Post It PRX.  
 At the time of writing it still needs to be updated to work with json files.  
 
+## Work in progress
+
+![main menu](/screenshot/pic_0000.bmp)   
+![add events](/screenshot/pic_0002.bmp)  
+![add events](/screenshot/pic_0003.bmp)  
+![add events](/screenshot/pic_0004.bmp)  
+![add events](/screenshot/pic_0005.bmp) 
+![edit events](/screenshot/pic_0006.bmp)   
+![credits screen](/screenshot/pic_0007.bmp)   
+
 ## Credits
 kevinr for the graphics library.  
 raytwo for all the images.  
