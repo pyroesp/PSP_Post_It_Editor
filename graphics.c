@@ -167,7 +167,7 @@ Image* gfx_createDefaultImage(void){
 	img->data = (u32*)malloc(sizeof(u32) * PSP_LINE_SIZE * SCREEN_HEIGHT);
 	if (!img->data)
 		return NULL;
-	memset(img->data, BLACK, (sizeof(u32) * PSP_LINE_SIZE * SCREEN_HEIGHT));
+	memset(img->data, WHITE, (sizeof(u32) * PSP_LINE_SIZE * SCREEN_HEIGHT));
 	
 	img->imageWidth = SCREEN_WIDTH;
 	img->imageHeight = SCREEN_HEIGHT;
