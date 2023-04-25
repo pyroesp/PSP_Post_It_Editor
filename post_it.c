@@ -237,14 +237,14 @@ void post_addRepeat(PostIt *post, int repeat){
 }
 
 
-void post_displayEvents(int x, int y, PostIt* p, intraFont* font){
+void post_displayEvents(int x, int y, PostIt* p, intraFont* font, int start, int max){
 	if (!p || !font)
 		return;
 	
 	int i;
 	intraFontSetStyle(font, 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-	for (i = 0; i < p->size; i++){
-		intraFontPrintf(font, x, y + 45*i, 
+	for (i = start; i < p->size && i < start + max; i++){
+		intraFontPrintf(font, x, y + 45 * (i - start), 
 			"Event (%d): %s\n    Datetime: %04hu-%02hu-%02hu %02hu:%02hu\n    Datepart: %s\n    Repeat: %d\n",
 			i, p->event[i].msg,
 			p->event[i].dt.year, p->event[i].dt.month, p->event[i].dt.day, p->event[i].dt.hour, p->event[i].dt.minutes,

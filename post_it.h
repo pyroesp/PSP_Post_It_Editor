@@ -79,7 +79,7 @@ void post_addDatePart(PostIt *post, DatePart part);
 void post_addRepeat(PostIt *post, int repeat);
 
 
-void post_displayEvents(int x, int y, PostIt* p, intraFont* font);
+void post_displayEvents(int x, int y, PostIt* p, intraFont* font, int start, int max);
 void post_displayJSON(int x, int y, PostIt* p, intraFont* font);
 
 void post_freeAll(PostIt *post);
