@@ -12,5 +12,18 @@
 			"datetime":	"2023-04-17 11:30",
 			"datepart":	"minute",
 			"repeat":	30
+		}, {
+			"event":	"Event 4",
+			"datetime":	"2023-04-17 11:30",
+			"datepart":	"year",
+			"repeat":	1
+		}, {
+			"event":	"Event 5",
+			"datetime":	"2023-04-17 11:30"
+		}, {
+			"event":	"Event 6",
+			"datetime":	"2023-04-17 11:30",
+			"datepart":	"month",
+			"repeat":	1
 		}]
 }
