@@ -141,9 +141,9 @@ int main (int argc, char *argv[]){
 	int animation = 0;
 	int add_event = 0;
 	int edit_event = 0;
+	int edit_event_start = 0;
 	int remove_event = 0;
 	AddSteps step = Add_None;
-	
 	Rect r;
 
 	// init gfx
@@ -231,11 +231,12 @@ int main (int argc, char *argv[]){
 				
 				// main_menu
 				for (int i = 0; i < sizeof(main_menu)/sizeof(main_menu[0]); i++){
+					if (i <= option)
+						gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
 					if (i == option){
 						gfx_drawLineScreen(100, 26, 100, 66 + (20 * i), BLACK);
 						gfx_drawLineScreen(100, 66 + (20 * i), 125, 66 + (20 * i), BLACK);
 						gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
-						gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
 						
 						intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY & ALPHA_50, 0.0f, 0);
 						x = 140;
@@ -255,7 +256,7 @@ int main (int argc, char *argv[]){
 				// view the post structure
 				if (post){
 					if (pad.Buttons & PSP_CTRL_LTRIGGER)
-						post_displayEvents(30, 40, post, ltn[1]);
+						post_displayEvents(30, 40, post, ltn[1], edit_event_start, 5);
 					else
 						post_displayJSON(30, 40, post, ltn[1]);
 				}
@@ -293,12 +294,18 @@ int main (int argc, char *argv[]){
 					SCROLL_LINE_X, (SCREEN_HEIGHT - SCROLL_LINE_H) / 2 + SCROLL_LINE_H, 
 					BLACK
 				);
-				gfx_fillScreenRect(LIGHTCYAN & ALPHA_50, r.x + 2, r.y + 2, r.w, r.h);
+				gfx_fillScreenRect(LIGHTCYAN & ALPHA_75, r.x + 2, r.y + 2, r.w, r.h);
 				gfx_fillScreenRect(DARKCYAN, r.x, r.y, r.w, r.h);
 				
+				#define EVENTS_ON_SCREEN 5
+				
+				edit_event_start = EVENTS_ON_SCREEN * (edit_event / EVENTS_ON_SCREEN);
+				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 30, 60 + 45 * edit_event, ">");
-				post_displayEvents(40, 60, post, ltn[1]);
+				intraFontPrintf(ltn[1], 30, 40 + 45 * (edit_event - edit_event_start), ">");
+				post_displayEvents(40, 40, post, ltn[1], edit_event_start, EVENTS_ON_SCREEN);
+				
+				edit_event_start = 0;
 				break;
 			case MM_ADD:
 				// add event to post
@@ -345,7 +352,7 @@ int main (int argc, char *argv[]){
 				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 				intraFontPrintf(ltn[1], 20, 40 + 45 * remove_event, ">");
-				post_displayEvents(30, 40, post, ltn[1]);
+				post_displayEvents(30, 40, post, ltn[1], edit_event_start, EVENTS_ON_SCREEN);
 				break;
 			case MM_SAVE:
 				if (!do_once){
