@@ -19,6 +19,10 @@
 
 #define POST_IT_DATEPART_OPTIONS "year, month, day, hour, minute"
 
+// show 5 events on screen max
+#define POST_IT_ON_SCREEN 5
+
+
 #define POST_IT_SIZE_DATETIME 17
 #define POST_IT_SIZE_DATEPART 7
 
