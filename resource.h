@@ -24,8 +24,9 @@ enum MainMenu{
 
 
 #define RES_MENU_OPTIONS 7
+#define RES_MENU_SIZE 10
 
-char main_menu[RES_MENU_OPTIONS][10] = {
+char main_menu[RES_MENU_OPTIONS][RES_MENU_SIZE] = {
 	"View",
 	"Edit",
 	"Add",
