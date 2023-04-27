@@ -1,5 +1,5 @@
 TARGET = PSP_Post_It_Editor
-OBJS = main.o graphics.o framebuffer.o post_it.o osk.o ./cJSON/cJSON.o
+OBJS = main.o graphics.o framebuffer.o post_it.o osk.o gui.o ./cJSON/cJSON.o
 
 INCDIR = ./cJSON
 CFLAGS = -O2 -G0 -Wall -g
