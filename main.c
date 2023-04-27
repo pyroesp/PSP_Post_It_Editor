@@ -26,6 +26,7 @@
 #include "graphics.h"
 #include "post_it.h"
 #include "osk.h"
+#include "gui.h"
 
 
 PSP_MODULE_INFO("PSP Post It - Editor", 0, 1, 1);
@@ -134,17 +135,15 @@ int main (int argc, char *argv[]){
 		sceKernelExitGame();
 
 	// other
-	int x = 0;
 	int do_once = 0;
 	int option = 0;
 	int selected = -1;
 	int animation = 0;
+	int event_start = 0;
 	int add_event = 0;
 	int edit_event = 0;
-	int edit_event_start = 0;
 	int remove_event = 0;
 	AddSteps step = Add_None;
-	Rect r;
 
 	// init gfx
 	gfx_initGraphics();
@@ -170,11 +169,8 @@ int main (int argc, char *argv[]){
 		// start gfx
 		gfx_guStart();	
 		
-		
 		// title
-		intraFontSetStyle(ltn[0], 0.9f, BLACK, DARKGRAY, 0.0f, 0);
-		intraFontPrint(ltn[0], 70, 18, "PSP Post It - Editor:");
-		gfx_drawLineScreen(70, 26, 245, 26, BLACK);
+		gui_printTitle("PSP Post It - Editor:", ltn[0]);
 		
 		// show different menu based of selected variable
 		switch (selected){
@@ -230,23 +226,7 @@ int main (int argc, char *argv[]){
 				}
 				
 				// main_menu
-				for (int i = 0; i < sizeof(main_menu)/sizeof(main_menu[0]); i++){
-					if (i <= option)
-						gfx_fillScreenRect(BLACK, 99, 65 + (20 * i), 3, 3);
-					if (i == option){
-						gfx_drawLineScreen(100, 26, 100, 66 + (20 * i), BLACK);
-						gfx_drawLineScreen(100, 66 + (20 * i), 125, 66 + (20 * i), BLACK);
-						gfx_fillScreenRect(BLACK, 124, 65 + (20 * i), 3, 3);
-						
-						intraFontSetStyle(ltn[1], 0.9f, RED, DARKGRAY & ALPHA_50, 0.0f, 0);
-						x = 140;
-					}else{
-						intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-						x = 120;
-					}
-
-					intraFontPrintf(ltn[1], x, 70 + (20 * i), "%s", main_menu[i]);
-				}
+				gui_mainMenu(&main_menu[0][0], RES_MENU_OPTIONS, RES_MENU_SIZE, ltn[1], option);
 				break;
 			case MM_VIEW:
 				// check if O is pressed to return to main menu
@@ -255,10 +235,21 @@ int main (int argc, char *argv[]){
 				}	
 				// view the post structure
 				if (post){
-					if (pad.Buttons & PSP_CTRL_LTRIGGER)
-						post_displayEvents(30, 40, post, ltn[1], edit_event_start, 5);
-					else
-						post_displayJSON(30, 40, post, ltn[1]);
+					// check if up/down is pressed
+					if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
+						event_start -= POST_IT_ON_SCREEN;
+					else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
+						event_start += POST_IT_ON_SCREEN;
+					
+					if (event_start < 0)
+						event_start = 0;
+					else if (event_start >= post->size)
+						event_start = ((post->size - 1) / POST_IT_ON_SCREEN) * POST_IT_ON_SCREEN;
+					
+					// show scroll bar
+					gui_scrollBar(post->size, event_start);
+					
+					post_displayEvents(30, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
 				}
 				break;
 			case MM_EDIT:
@@ -277,35 +268,14 @@ int main (int argc, char *argv[]){
 				else if (edit_event >= post->size)
 					edit_event = post->size - 1;
 				
-				#define SCROLL_LINE_H		150
-				#define SCROLL_LINE_X		10
-				#define SCROLL_BAR_OFFSET	5
-				#define SCROLL_BAR_W		11
-				#define SCROLL_BAR_H		(SCROLL_LINE_H - (SCROLL_BAR_OFFSET * 2))
-				#define SCROLL_BAR_X		5
+				// show scroll bar
+				gui_scrollBar(post->size, edit_event);
 				
-				r.w = SCROLL_BAR_W;
-				r.h = SCROLL_BAR_H / post->size;
-				r.x = SCROLL_BAR_X;
-				r.y = (SCREEN_HEIGHT - SCROLL_BAR_H) / 2 + edit_event * r.h;
-				
-				gfx_drawLineScreen(
-					SCROLL_LINE_X, (SCREEN_HEIGHT - SCROLL_LINE_H) / 2, 
-					SCROLL_LINE_X, (SCREEN_HEIGHT - SCROLL_LINE_H) / 2 + SCROLL_LINE_H, 
-					BLACK
-				);
-				gfx_fillScreenRect(LIGHTCYAN & ALPHA_75, r.x + 2, r.y + 2, r.w, r.h);
-				gfx_fillScreenRect(DARKCYAN, r.x, r.y, r.w, r.h);
-				
-				#define EVENTS_ON_SCREEN 5
-				
-				edit_event_start = EVENTS_ON_SCREEN * (edit_event / EVENTS_ON_SCREEN);
+				event_start = POST_IT_ON_SCREEN * (edit_event / POST_IT_ON_SCREEN);
 				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 30, 40 + 45 * (edit_event - edit_event_start), ">");
-				post_displayEvents(40, 40, post, ltn[1], edit_event_start, EVENTS_ON_SCREEN);
-				
-				edit_event_start = 0;
+				intraFontPrintf(ltn[1], 30, 40 + 45 * (edit_event - event_start), ">");
+				post_displayEvents(40, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
 				break;
 			case MM_ADD:
 				// add event to post
@@ -350,9 +320,14 @@ int main (int argc, char *argv[]){
 				else if (remove_event >= post->size)
 					remove_event = post->size - 1;
 				
+				// show scroll bar
+				gui_scrollBar(post->size, remove_event);
+				
+				event_start = POST_IT_ON_SCREEN * (remove_event / POST_IT_ON_SCREEN);
+				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 20, 40 + 45 * remove_event, ">");
-				post_displayEvents(30, 40, post, ltn[1], edit_event_start, EVENTS_ON_SCREEN);
+				intraFontPrintf(ltn[1], 30, 40 + 45 * (remove_event - event_start), ">");
+				post_displayEvents(40, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
 				break;
 			case MM_SAVE:
 				if (!do_once){
