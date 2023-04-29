@@ -7,6 +7,8 @@
 		raytwo for images
 		Benhur for intraFont
 		DaveGamble for cJSON (v1.7.15)
+		pspdev github & community for pspsdk, 
+			docker image and discord help
 
 */
 
@@ -143,7 +145,7 @@ int main (int argc, char *argv[]){
 	int add_event = 0;
 	int edit_event = 0;
 	int remove_event = 0;
-	AddSteps step = Add_None;
+	EventState step = State_None;
 
 	// init gfx
 	gfx_initGraphics();
@@ -182,13 +184,12 @@ int main (int argc, char *argv[]){
 				switch (animation){
 					case 0:
 						// check if X is pressed
-						if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
+						if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS))
 							selected = option;
-						}
+	
 						// check if O is pressed to return to main menu
-						if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+						if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 							selected = -1;
-						}
 						
 						// check if up/down is pressed
 						if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
@@ -225,57 +226,77 @@ int main (int argc, char *argv[]){
 						break;
 				}
 				
-				// main_menu
-				gui_mainMenu(&main_menu[0][0], RES_MENU_OPTIONS, RES_MENU_SIZE, ltn[1], option);
+				// main_menu options
+				gui_mainMenuOptions(&main_menu[0][0], RES_MENU_OPTIONS, RES_MENU_SIZE, ltn[1], option);
 				break;
 			case MM_VIEW:
 				// check if O is pressed to return to main menu
-				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 					selected = -1;
-				}	
+
 				// view the post structure
 				if (post){
 					// check if up/down is pressed
 					if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
-						event_start -= POST_IT_ON_SCREEN;
+						event_start -= POST_IT_MAX_ON_SCREEN;
 					else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
-						event_start += POST_IT_ON_SCREEN;
+						event_start += POST_IT_MAX_ON_SCREEN;
 					
 					if (event_start < 0)
 						event_start = 0;
 					else if (event_start >= post->size)
-						event_start = ((post->size - 1) / POST_IT_ON_SCREEN) * POST_IT_ON_SCREEN;
+						event_start = ((post->size - 1) / POST_IT_MAX_ON_SCREEN) * POST_IT_MAX_ON_SCREEN;
 					
 					// show scroll bar
 					gui_scrollBar(post->size, event_start);
 					
-					post_displayEvents(30, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
+					// post_displayEvents(30, 40, post, ltn[1], event_start, POST_IT_MAX_ON_SCREEN);
+					gui_displayEvent(post, event_start, ltn[1]);
 				}
 				break;
 			case MM_EDIT:
-				// check if O is pressed to return to main menu
-				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
-					selected = -1;
+				if (!do_once){
+					// check if X is pressed
+					if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
+						do_once = 1;
+						step = State_Message;
+					}
+					
+					// check if O is pressed to return to main menu
+					if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
+						selected = -1;
+
+					// check if up/down is pressed
+					if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
+						--edit_event;
+					else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
+						++edit_event;
+					
+					if (edit_event < 0)
+						edit_event = 0;
+					else if (edit_event >= post->size)
+						edit_event = post->size - 1;
+					
+					// show scroll bar
+					gui_scrollBar(post->size, edit_event);
+					
+					event_start = POST_IT_MAX_ON_SCREEN * (edit_event / POST_IT_MAX_ON_SCREEN);
+					
+					gui_cursorEvent('>', (edit_event - event_start), ltn[1]);
+					gui_displayEvent(post, event_start, ltn[1]);
+				}else{
+					gfx_fillScreenRect(LIGHTGRAY, SCREEN_WIDTH / 2, 220, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 220);
+					if (step == State_Done){
+						// check if O is pressed to return to main menu
+						if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+							post_convertJsonToPostIt(post);
+							selected = -1;
+						}
+
+						intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
+						intraFontPrintf(ltn[1], 30, 40, "Event edited.\nPress O to go back...");
+					}
 				}
-				// check if up/down is pressed
-				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
-					--edit_event;
-				else if (!(oldpad.Buttons & PSP_CTRL_DOWN) && (pad.Buttons & PSP_CTRL_DOWN))
-					++edit_event;
-				
-				if (edit_event < 0)
-					edit_event = 0;
-				else if (edit_event >= post->size)
-					edit_event = post->size - 1;
-				
-				// show scroll bar
-				gui_scrollBar(post->size, edit_event);
-				
-				event_start = POST_IT_ON_SCREEN * (edit_event / POST_IT_ON_SCREEN);
-				
-				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 30, 40 + 45 * (edit_event - event_start), ">");
-				post_displayEvents(40, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
 				break;
 			case MM_ADD:
 				// add event to post
@@ -283,14 +304,14 @@ int main (int argc, char *argv[]){
 					if (!do_once){
 						add_event = post_addEvent(post);
 						do_once = 1;
-						step = Add_Message;
+						step = State_Message;
 					}else{
 						gfx_fillScreenRect(LIGHTGRAY, SCREEN_WIDTH / 2, 220, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 220);
 						if (!add_event){
 							// check if O is pressed to return to main menu
-							if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+							if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 								selected = -1;
-							}
+
 							intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 							intraFontPrintf(ltn[1], 30, 40, "Event added.\nPress O to go back...");
 						}
@@ -299,15 +320,14 @@ int main (int argc, char *argv[]){
 				break;
 			case MM_REMOVE:
 				// check if O is pressed to return to main menu
-				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 					selected = -1;
-				}
+
 				// check if X is pressed
-				if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS)){
-					if (post_removeEvent(post, remove_event)){
+				if (!(oldpad.Buttons & PSP_CTRL_CROSS) && (pad.Buttons & PSP_CTRL_CROSS))
+					if (post_removeEvent(post, remove_event))
 						post_convertJsonToPostIt(post);
-					}
-				}
+
 				
 				// check if up/down is pressed
 				if (!(oldpad.Buttons & PSP_CTRL_UP) && (pad.Buttons & PSP_CTRL_UP))
@@ -323,11 +343,10 @@ int main (int argc, char *argv[]){
 				// show scroll bar
 				gui_scrollBar(post->size, remove_event);
 				
-				event_start = POST_IT_ON_SCREEN * (remove_event / POST_IT_ON_SCREEN);
+				event_start = POST_IT_MAX_ON_SCREEN * (remove_event / POST_IT_MAX_ON_SCREEN);
 				
-				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
-				intraFontPrintf(ltn[1], 30, 40 + 45 * (remove_event - event_start), ">");
-				post_displayEvents(40, 40, post, ltn[1], event_start, POST_IT_ON_SCREEN);
+				gui_cursorEvent('>', (remove_event - event_start), ltn[1]);
+				gui_displayEvent(post, event_start, ltn[1]);
 				break;
 			case MM_SAVE:
 				if (!do_once){
@@ -346,18 +365,17 @@ int main (int argc, char *argv[]){
 				
 				if (do_once){
 					// check if O is pressed to return to main menu
-					if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+					if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 						selected = -1;
-					}
+	
 					intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 					intraFontPrintf(ltn[1], 30, 40, "JSON saved.\nPress O to go back...");
 				}
 				break;
 			case MM_CREDITS:
 				// check if O is pressed to return to main menu
-				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE)){
+				if (!(oldpad.Buttons & PSP_CTRL_CIRCLE) && (pad.Buttons & PSP_CTRL_CIRCLE))
 					selected = -1;
-				}
 				
 				intraFontSetStyle(ltn[1], 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
 				intraFontPrintf(ltn[1], 30, 40, credits);
@@ -387,11 +405,11 @@ int main (int argc, char *argv[]){
 					unsigned short *uni1 = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
 					unsigned short *uni2 = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
 					switch (step){
-						case Add_Message:	
+						case State_Message:	
 							osk_convertCharToUnsignedShort(POST_IT_JSON_MESSAGE, uni1);
 							osk_updateOskParam(&kb, uni1, NULL, NULL);
 							break;
-						case Add_Datetime:
+						case State_DateTime:
 							pspTime t;
 							sceRtcGetCurrentClockLocalTime(&t);
 							sprintf(ascii, "%04hu-%02hu-%02hu %02hu:%02hu",
@@ -402,15 +420,15 @@ int main (int argc, char *argv[]){
 							osk_convertCharToUnsignedShort(ascii, uni2);
 							osk_updateOskParam(&kb, uni1, uni2, NULL);
 							break;
-						case Add_Datepart:
+						case State_DatePart:
 							osk_convertCharToUnsignedShort(POST_IT_JSON_DATEPART " (" POST_IT_DATEPART_OPTIONS ")", uni1);
 							osk_updateOskParam(&kb, uni1, NULL, NULL);
 							break;
-						case Add_Repeat:
+						case State_Repeat:
 							osk_convertCharToUnsignedShort(POST_IT_JSON_REPEAT, uni1);
 							osk_updateOskParam(&kb, uni1, NULL, NULL);
 							break;
-						case Add_Done:
+						case State_Done:
 							post_convertJsonToPostIt(post);
 							add_event = 0;
 							break;
@@ -420,26 +438,26 @@ int main (int argc, char *argv[]){
 					free(uni1);
 					free(uni2);
 					
-					if (step != Add_Done){
+					if (step != State_Done){
 						osk_start(&kb);
 						if (osk_showOsk(&kb)){
 							// convert osk unicode string to ascii
 							osk_convertUnsignedShortToChar(kb.data->outtext, ascii);
 							
 							switch (step){
-								case Add_Message:
+								case State_Message:
 									post_addMessage(post, ascii);
-									step = Add_Datetime;
+									step = State_DateTime;
 									break;
-								case Add_Datetime:
+								case State_DateTime:
 									pspTime t;
 									sscanf(ascii, "%hu%*c%hu%*c%hu %hu%*c%hu", 
 										&t.year, &t.month, &t.day, &t.hour, &t.minutes
 									);
 									post_addDateTime(post, t);
-									step = Add_Datepart;
+									step = State_DatePart;
 									break;
-								case Add_Datepart:
+								case State_DatePart:
 									if(strcmp(ascii, "")){ // if not empty
 										if (!strcmp(ascii, "hour"))
 											post_addDatePart(post, HOUR);
@@ -451,21 +469,21 @@ int main (int argc, char *argv[]){
 											post_addDatePart(post, MONTH);
 										else if (!strcmp(ascii, "day"))
 											post_addDatePart(post, DAY);
-										step = Add_Repeat;
+										step = State_Repeat;
 									}else{
-										step = Add_Done;
+										step = State_Done;
 									}
 									break;
-								case Add_Repeat:
+								case State_Repeat:
 									if(strcmp(ascii, "")){ // if not empty
 										int x = 0;
 										sscanf(ascii, "%d", &x);
 										post_addRepeat(post, x);
 									}
-									step = Add_Done;
+									step = State_Done;
 									break;
 								default:
-									step = Add_Done;
+									step = State_Done;
 									break;
 							}
 							
@@ -473,6 +491,137 @@ int main (int argc, char *argv[]){
 						}
 					}
 					
+					free(ascii);
+				}
+				break;
+			case MM_EDIT:
+				if (do_once){
+					char *ascii = (char*)malloc(sizeof(char) * OSK_STRING_SIZE);
+					unsigned short *desc = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+					unsigned short *in = (unsigned short*)malloc(sizeof(unsigned short) * OSK_STRING_SIZE);
+					cJSON *item = cJSON_GetArrayItem(post->json->child, edit_event);
+					cJSON *obj = NULL;
+					char *json_string = NULL;
+					int json_int = 0;
+					switch(step){
+						case State_Message:
+							obj = cJSON_GetObjectItem(item, POST_IT_JSON_MESSAGE);
+							json_string = cJSON_GetStringValue(obj);
+							
+							osk_convertCharToUnsignedShort(POST_IT_JSON_MESSAGE, desc);
+							osk_convertCharToUnsignedShort(json_string, in);
+							osk_updateOskParam(&kb, desc, in, NULL);
+							break;
+						case State_DateTime:
+							obj = cJSON_GetObjectItem(item, POST_IT_JSON_DATETIME);
+							json_string = cJSON_GetStringValue(obj);
+							
+							osk_convertCharToUnsignedShort(POST_IT_JSON_DATETIME, desc);
+							osk_convertCharToUnsignedShort(json_string, in);
+							osk_updateOskParam(&kb, desc, in, NULL);
+							break;
+						case State_DatePart:
+							obj = cJSON_GetObjectItem(item, POST_IT_JSON_DATEPART);
+							if (!obj){ // add datepart to cjson if obj empty
+								cJSON_AddStringToObject(item, POST_IT_JSON_DATEPART, "");
+								obj = cJSON_GetObjectItem(item, POST_IT_JSON_DATEPART);
+							}
+							
+							json_string = cJSON_GetStringValue(obj);
+							osk_convertCharToUnsignedShort(POST_IT_JSON_DATEPART " (" POST_IT_DATEPART_OPTIONS ")", desc);
+							osk_convertCharToUnsignedShort(json_string, in);
+							osk_updateOskParam(&kb, desc, in, NULL);
+							break;
+						case State_Repeat:
+							obj = cJSON_GetObjectItem(item, POST_IT_JSON_REPEAT);
+							if (!obj){ // add repeat to cjson if obj empty
+								cJSON_AddNumberToObject(item, POST_IT_JSON_REPEAT, (double)0);
+								obj = cJSON_GetObjectItem(item, POST_IT_JSON_REPEAT);
+							}
+							
+							json_int = (int)cJSON_GetNumberValue(obj);
+							sprintf(ascii, "%d", json_int);
+							
+							osk_convertCharToUnsignedShort(POST_IT_JSON_REPEAT, desc);
+							osk_convertCharToUnsignedShort(ascii, in);
+							osk_updateOskParam(&kb, desc, in, NULL);
+							break;
+						default:
+							break;
+					}
+					free(desc);
+					free(in);
+					
+					if (step != State_Done){
+						osk_start(&kb);
+						if (osk_showOsk(&kb)){
+							// convert osk unicode string to ascii
+							osk_convertUnsignedShortToChar(kb.data->outtext, ascii);
+							
+							switch (step){
+								case State_Message:
+									post_editMessage(post, edit_event, ascii);
+									step = State_DateTime;
+									break;
+								case State_DateTime:
+									pspTime t;
+									sscanf(ascii, "%hu%*c%hu%*c%hu %hu%*c%hu", 
+										&t.year, &t.month, &t.day, &t.hour, &t.minutes
+									);
+									post_editDateTime(post, edit_event, t);
+									step = State_DatePart;
+									break;
+								case State_DatePart:
+									if(strcmp(ascii, "")){ // if not empty
+										if (!strcmp(ascii, "hour"))
+											post_editDatePart(post, edit_event, HOUR);
+										else if (!strcmp(ascii, "minute"))
+											post_editDatePart(post, edit_event, MINUTE);
+										else if (!strcmp(ascii, "year"))
+											post_editDatePart(post, edit_event, YEAR);
+										else if (!strcmp(ascii, "month"))
+											post_editDatePart(post, edit_event, MONTH);
+										else if (!strcmp(ascii, "day"))
+											post_editDatePart(post, edit_event, DAY);
+										step = State_Repeat;
+									}else{
+										// if data is empty
+										// check if current item has DatePart and/or Repeat
+										// delete if found
+										obj = cJSON_GetObjectItem(item, POST_IT_JSON_DATEPART);
+										if (obj)
+											cJSON_DeleteItemFromObject(item, POST_IT_JSON_DATEPART);
+										
+										obj = cJSON_GetObjectItem(item, POST_IT_JSON_REPEAT);
+										if (obj)
+											cJSON_DeleteItemFromObject(item, POST_IT_JSON_REPEAT);
+										
+										step = State_Done;
+									}
+									break;
+								case State_Repeat:
+									if(strcmp(ascii, "")){ // if not empty
+										int x = 0;
+										sscanf(ascii, "%d", &x);
+										post_editRepeat(post, edit_event, x);
+									}else{
+										// if data is empty
+										// check if current item has Repeat
+										// delete if found										
+										obj = cJSON_GetObjectItem(item, POST_IT_JSON_REPEAT);
+										if (obj)
+											cJSON_DeleteItemFromObject(item, POST_IT_JSON_REPEAT);
+									}
+									step = State_Done;
+									break;
+								default:
+									step = State_Done;
+									break;
+							}
+							
+							osk_stop(&kb);
+						}
+					}
 					free(ascii);
 				}
 				break;
