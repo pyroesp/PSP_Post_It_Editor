@@ -1,6 +1,7 @@
 #include "gui.h"
 
 
+
 void gui_printTitle(char *title, intraFont *f){
 	// title
 	intraFontSetStyle(f, 0.9f, BLACK, DARKGRAY, 0.0f, 0);
@@ -13,7 +14,7 @@ void gui_printTitle(char *title, intraFont *f){
 }
 
 
-void gui_mainMenu(char *menu, int menu_options, int menu_length, intraFont *f, int selected_option){
+void gui_mainMenuOptions(char *menu, int menu_options, int menu_length, intraFont *f, int selected_option){
 	// main menu
 	int x;
 	for (int i = 0; i < menu_options; i++){
@@ -76,4 +77,15 @@ void gui_scrollBar(int total_positions, int position){
 	gfx_fillScreenRect(LIGHTCYAN & ALPHA_25, r.x + 2, r.y + 2, r.w, r.h);
 	// draw scroll bar
 	gfx_fillScreenRect(DARKCYAN, r.x, r.y, r.w, r.h);
+}
+
+
+
+void gui_displayEvent(PostIt *post, int event_index, intraFont *f){
+	post_displayEvents(GUI_EVENT_POS_X, GUI_EVENT_POS_Y, post, f, event_index, POST_IT_MAX_ON_SCREEN);	
+}
+
+void gui_cursorEvent(char indicator, int position, intraFont *f){
+	intraFontSetStyle(f, 0.9f, BLACK, DARKGRAY & ALPHA_50, 0.0f, 0);
+	intraFontPrintf(f, GUI_CURSOR_POS_X, GUI_EVENT_POS_Y + GUI_EVENT_Y_OFFSET * position, "%c", indicator);
 }
