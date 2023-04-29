@@ -166,11 +166,14 @@ void post_addMessage(PostIt *post, char *msg){
 	if (j){
 		cJSON *temp = NULL;
 		char *buffer = (char*)malloc(sizeof(char) * (strlen(msg)+1));
-		strcpy(buffer, msg);
-		temp = cJSON_CreateString(buffer);
-		if (temp){
-			if (!cJSON_AddItemToObject(j, POST_IT_JSON_MESSAGE, temp))
-				cJSON_Delete(temp);
+		if (buffer){
+			strcpy(buffer, msg);
+			temp = cJSON_CreateString(buffer);
+			if (temp){
+				if (!cJSON_AddItemToObject(j, POST_IT_JSON_MESSAGE, temp))
+					cJSON_Delete(temp);
+			}
+			free(buffer);
 		}
 	}
 }
@@ -193,6 +196,7 @@ void post_addDateTime(PostIt *post, pspTime datetime){
 				if (!cJSON_AddItemToObject(j, POST_IT_JSON_DATETIME, temp))
 					cJSON_Delete(temp);
 			}
+			free(buffer);
 		}
 	}
 }
@@ -216,6 +220,7 @@ void post_addDatePart(PostIt *post, DatePart part){
 				if (!cJSON_AddItemToObject(j, POST_IT_JSON_DATEPART, temp))
 					cJSON_Delete(temp);
 			}
+			free(buffer);
 		}
 	}
 }
@@ -233,6 +238,72 @@ void post_addRepeat(PostIt *post, int repeat){
 			if (!cJSON_AddItemToObject(j, POST_IT_JSON_REPEAT, temp))
 				cJSON_Delete(temp);
 		}
+	}
+}
+
+
+void post_editMessage(PostIt *post, int index, char *msg){
+	if (!post || !msg)
+		return;
+	
+	cJSON *j = cJSON_GetArrayItem(post->json->child, index);
+	if (j){
+		cJSON *temp = cJSON_GetObjectItem(j, POST_IT_JSON_MESSAGE);
+		char *buffer = (char*)malloc(sizeof(char) * (strlen(msg)+1));
+		if (buffer && temp){
+			strcpy(buffer, msg);
+			cJSON_SetValuestring(temp, buffer);
+			free(buffer);
+		}
+	}
+}
+
+void post_editDateTime(PostIt *post, int index, pspTime datetime){
+	if (!post)
+		return;
+	
+	cJSON *j = cJSON_GetArrayItem(post->json->child, index);
+	if (j){
+		cJSON *temp = cJSON_GetObjectItem(j, POST_IT_JSON_DATETIME);
+		char *buffer = (char*)malloc(sizeof(char) * POST_IT_SIZE_DATETIME);
+		if (buffer && temp){
+			sprintf(buffer, "%04hu-%02hu-%02hu %02hu:%02hu",
+				datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minutes
+			);
+			cJSON_SetValuestring(temp, buffer);
+			free(buffer);
+		}
+	}
+}
+
+void post_editDatePart(PostIt *post, int index, DatePart part){
+	if (!post)
+		return;
+	
+	cJSON *j = cJSON_GetArrayItem(post->json->child, index);
+	if (j){
+		cJSON *temp = cJSON_GetObjectItem(j, POST_IT_JSON_DATEPART);
+		char *buffer = (char*)malloc(sizeof(char) * POST_IT_SIZE_DATEPART);
+		if (buffer && temp){
+			sprintf(buffer, "%s", 
+				part == YEAR ? "year" : part == MONTH ? "month" : part == DAY ? "day" : 
+				part == HOUR ? "hour" : part == MINUTE ? "minute" : "none"
+			);
+			cJSON_SetValuestring(temp, buffer);
+			free(buffer);
+		}
+	}
+}
+
+void post_editRepeat(PostIt *post, int index, int repeat){
+	if (!post)
+		return;
+	
+	cJSON *j = cJSON_GetArrayItem(post->json->child, index);
+	if (j){
+		cJSON *temp = cJSON_GetObjectItem(j, POST_IT_JSON_REPEAT);
+		if (temp)
+			cJSON_SetNumberValue(temp, (double)repeat);
 	}
 }
 

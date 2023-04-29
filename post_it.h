@@ -1,6 +1,7 @@
 #ifndef POST_IT_H
 #define POST_IT_H
 
+#include <sys/time.h>
 #include <psprtc.h>
 
 #include <intraFont.h>
@@ -20,7 +21,7 @@
 #define POST_IT_DATEPART_OPTIONS "year, month, day, hour, minute"
 
 // show 5 events on screen max
-#define POST_IT_ON_SCREEN 5
+#define POST_IT_MAX_ON_SCREEN 5
 
 
 #define POST_IT_SIZE_DATETIME 17
@@ -28,13 +29,13 @@
 
 
 typedef enum{
-	Add_None = 0,
-	Add_Message,
-	Add_Datetime,
-	Add_Datepart,
-	Add_Repeat,
-	Add_Done
-}AddSteps;
+	State_None = 0,
+	State_Message,
+	State_DateTime,
+	State_DatePart,
+	State_Repeat,
+	State_Done
+}EventState;
 
 
 typedef enum{
@@ -81,6 +82,11 @@ void post_addMessage(PostIt *post, char *msg);
 void post_addDateTime(PostIt *post, pspTime datetime);
 void post_addDatePart(PostIt *post, DatePart part);
 void post_addRepeat(PostIt *post, int repeat);
+
+void post_editMessage(PostIt *post, int index, char *msg);
+void post_editDateTime(PostIt *post, int index, pspTime datetime);
+void post_editDatePart(PostIt *post, int index, DatePart part);
+void post_editRepeat(PostIt *post, int index, int repeat);
 
 
 void post_displayEvents(int x, int y, PostIt* p, intraFont* font, int start, int max);
